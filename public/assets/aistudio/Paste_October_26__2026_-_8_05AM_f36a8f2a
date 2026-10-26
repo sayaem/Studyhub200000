@@ -1,0 +1,711 @@
+STUDYHUB STUDY BUDDY 2.0 — PREMIUM RESPONSE RENDERING & CONTEXT-AWARE AI
+
+ROLE
+
+Act as a senior Android engineer, AI integration architect, conversational UX designer, and data-context engineering specialist.
+
+Upgrade the existing StudyHub Study Buddy so it delivers beautifully formatted, easy-to-read, genuinely personalized AI responses grounded in the student's actual StudyHub data.
+
+This is a targeted enhancement to the existing working Gemini-powered Study Buddy. Do NOT migrate to OpenRouter or replace Gemini.
+
+The two primary objectives are:
+
+1. Implement premium, native-feeling AI response formatting.
+2. Build a reliable, context-aware system that supplies relevant real student data to Gemini and lets students control which context the AI can use.
+
+Inspect the existing repository and implement these changes directly. Do not return only a plan or a static UI mockup.
+
+---
+
+1. STRICT SCOPE AND PRESERVATION
+
+Before editing, inspect the actual project architecture and identify the existing Gemini integration, backend, chat screen, message model, data repositories, prompt construction, conversation history, and navigation.
+
+Preserve:
+
+- The existing Gemini provider and working API integration.
+- The existing Study Buddy chat screen and visual identity.
+- The robot avatar and current header.
+- Existing conversation history and new-chat functionality.
+- Existing message composer, attachment controls, loading indicators, and error handling.
+- The existing Home screen Study Buddy entry point.
+- The existing five bottom navigation tabs: Home, Syllabus, Focus, Calendar, Tools.
+- The existing Open Revision Hub action.
+- Existing subjects, chapters, study sessions, notes, schedules, revision records, goals, profile, and other user data.
+- The existing application architecture, theme, and navigation patterns.
+
+Do not redesign the entire application or change unrelated screens.
+
+Do not reset the database, introduce a duplicate student-data system, or replace working data with mock data.
+
+---
+
+2. FIX PREMIUM AI RESPONSE FORMATTING
+
+A. Fix the Literal Markdown Bug
+
+The current Study Buddy response visibly displays strings such as:
+
+- "**Revisions Due Today:**"
+- "**Scheduled Tasks Today:**"
+- "**Morning**"
+- "**Pick 1 Chapter to Start:**"
+
+This is a rendering defect. Markdown formatting syntax is being displayed as literal text instead of being rendered correctly.
+
+Inspect the actual message rendering pipeline and identify the root cause.
+
+Determine whether the backend returns Markdown, the frontend expects plain text, Markdown is escaped twice, or a custom parser is incorrectly processing the content.
+
+Implement a consistent, safe rendering strategy.
+
+Requirements:
+
+- Bold Markdown must render as actual bold text.
+- Headings must have appropriate hierarchy.
+- Bulleted and numbered lists must display correctly.
+- Paragraphs must have comfortable spacing.
+- Inline code and code blocks must render correctly when relevant.
+- Links must be rendered safely and be tappable when appropriate.
+- Tables must either render correctly on mobile or be transformed into a mobile-friendly alternative.
+- Unordered and ordered lists must not lose their structure.
+- Preserve line breaks where meaningful.
+- Handle malformed or incomplete Markdown gracefully.
+
+Do not simply remove all asterisks with a string replacement. Do not destroy legitimate text, punctuation, lists, or formatting.
+
+Choose an implementation appropriate for the actual framework already used in the project.
+
+If the project uses Jetpack Compose, use an appropriate Compose-compatible rendering approach or a well-tested lightweight Markdown renderer. If it uses XML-based Android views, WebView, or another framework, follow the existing architecture and use a suitable solution.
+
+Do not add a heavy dependency unless necessary.
+
+B. Premium Message Typography
+
+Create a polished, readable hierarchy within existing message bubbles.
+
+Use the established StudyHub design tokens and theme.
+
+Recommended hierarchy:
+
+- Main section heading: clear, moderately emphasized.
+- Subheading: smaller but distinguishable.
+- Body text: comfortable reading size and line height.
+- Bold text: reserved for important concepts, numbers, labels, and actions.
+- Secondary metadata: visually subtle but readable.
+- Lists: consistent indentation and spacing.
+- Paragraphs: adequate vertical separation without excessive empty space.
+
+Avoid oversized headings, excessive bold text, unnecessary uppercase text, and giant blocks of unbroken prose.
+
+Keep the existing light theme if that is what the current Study Buddy screen uses.
+
+Do not introduce a new color palette or redesign the entire chat screen.
+
+C. Structured Response Components
+
+Long answers should be presented as a sequence of meaningful, easy-to-scan sections rather than a single wall of text.
+
+Where appropriate, support these response patterns:
+
+1. Short opening summary.
+2. Important finding or status.
+3. Recommended next action.
+4. Step-by-step plan.
+5. Relevant supporting details.
+6. One concise follow-up question when genuinely necessary.
+
+For study recommendations, use compact, structured sections such as:
+
+- Today's priorities.
+- Recommended study session.
+- Topics to revise.
+- Suggested schedule.
+- Important deadline.
+- Next action.
+
+Use compact cards or subtle separators only when they materially improve readability.
+
+Do not turn every sentence into a card. Do not create excessive nested containers or repeat the same information in multiple formats.
+
+D. Native Interactive Elements
+
+Where appropriate, support structured interactive components instead of embedding everything in plain text.
+
+Potential elements include:
+
+- Revision task cards.
+- Study session suggestions.
+- Subject and chapter references.
+- Schedule suggestions.
+- Exam countdown summaries.
+- Progress summaries.
+- Relevant existing StudyHub actions.
+
+Only introduce an interactive element when the response contains structured, validated data that the application can safely interpret.
+
+Do not parse arbitrary AI-generated text and execute actions based on it.
+
+Use typed response models or a validated structured-output mechanism where appropriate. If structured AI output is used, retain a safe text-rendering fallback.
+
+Existing navigation actions, such as Open Revision Hub, must continue working.
+
+---
+
+3. BUILD A REAL STUDENT CONTEXT ENGINE
+
+The most important requirement is that Gemini must receive relevant, accurate StudyHub context instead of guessing the student's situation.
+
+First inspect the existing repositories, local database, backend APIs, and domain models.
+
+Create or improve a centralized context-building layer that gathers real student information from existing sources.
+
+Reuse existing repositories and services. Do not create duplicate databases or parallel implementations.
+
+A. Supported Context Sources
+
+Include the following categories when they exist in the application:
+
+1. Student Profile and Preferences
+
+- Preferred name, if available and appropriate.
+- Academic level or program.
+- Target examination or admission goal.
+- Preferred study time.
+- Daily study target.
+- Relevant study preferences.
+- Language preference, when available.
+
+Do not invent missing profile values.
+
+2. Syllabus and Academic Progress
+
+- Actual subjects.
+- Existing chapters or topics.
+- Chapter completion status.
+- Remaining chapters.
+- Recorded difficulty or confidence ratings, if available.
+- Upcoming syllabus priorities, if explicitly configured.
+- Relevant subject-level progress.
+
+Never invent subjects, chapters, chapter counts, or completion percentages.
+
+3. Smart Revision
+
+If the feature exists, provide:
+
+- Actual revision tasks due today.
+- Overdue revision tasks.
+- Upcoming revision tasks.
+- Relevant topic-level review history.
+- Previous self-ratings, such as Hard, Okay, or Easy.
+- Existing recommended revision dates.
+- Current revision status.
+
+Distinguish clearly between zero revision tasks, unavailable revision data, and a revision system that has not been initialized.
+
+4. Calendar and Study Planner
+
+Provide relevant information such as:
+
+- Today's scheduled study sessions.
+- Upcoming sessions.
+- Existing planned tasks.
+- Actual scheduling conflicts.
+- Upcoming deadlines.
+- Approved study plans.
+- Relevant unscheduled priorities, if the existing system records them.
+
+Do not confuse proposed plans with confirmed Calendar entries.
+
+Do not claim that a task has been scheduled unless it has actually been saved successfully.
+
+5. Focus and Study History
+
+Where available, include:
+
+- Recent completed Focus sessions.
+- Actual study duration.
+- Recent subject-level study time.
+- Daily and weekly totals.
+- Study streaks and goals.
+- Historical study patterns.
+- Session outcomes.
+- Relevant interruptions or completion records if recorded.
+
+Do not treat a planned session as completed study time.
+
+Do not infer why a student missed a session unless the student explicitly recorded the reason.
+
+6. Stats and Progress
+
+If existing Stats functionality is available, include relevant verified values:
+
+- Weekly study duration.
+- Goal completion.
+- Subject-level study time.
+- Recent consistency trends.
+- Chapter completion trends.
+- Relevant progress comparisons.
+
+Use existing calculation logic wherever possible. Do not create a second independent calculation system that produces inconsistent numbers.
+
+7. Admission and Exam Information
+
+Where supported, provide:
+
+- Actual target examinations.
+- Confirmed exam dates.
+- Recorded deadlines.
+- Application status.
+- Days remaining, calculated from valid dates and the correct local date.
+- Relevant preparation progress.
+
+Never invent an exam date or admission deadline.
+
+If a date is missing or uncertain, explicitly treat it as unavailable.
+
+8. Notes and Study Materials
+
+When relevant and accessible, supply:
+
+- Student-created notes.
+- Saved study material.
+- Relevant selected documents or excerpts.
+- Subject-specific learning resources already stored in StudyHub.
+
+Only include content the current user is authorized to access.
+
+Do not send every note or document into every request. Select relevant content according to the user's question and context settings.
+
+---
+
+4. STUDENT-CONTROLLED CONTEXT SELECTION
+
+The student must be able to choose what information Study Buddy uses to answer a question.
+
+Implement a clean, compact context-selection interface integrated into the existing Study Buddy screen.
+
+Do not redesign the whole chat UI.
+
+A. Context Selector UI
+
+Add a small context control near the existing message composer or chat header, following the existing design language.
+
+Possible presentation:
+
+- A compact button labeled "Context" or "Personalize".
+- A subtle icon indicating connected StudyHub data.
+- A selected-context count, if useful.
+- A bottom sheet or dialog that opens when tapped.
+
+Use the existing UI framework and component patterns.
+
+The selector should be easy to discover without taking excessive screen space.
+
+B. Context Categories
+
+Show selectable categories based on actual features and data available in the app.
+
+Suggested categories:
+
+- Profile & Goals.
+- Syllabus & Chapters.
+- Revision Tasks.
+- Calendar & Plans.
+- Focus & Study History.
+- Stats & Progress.
+- Exams & Admission.
+- Notes & Study Materials.
+
+Each category should have:
+
+- A clear title.
+- A short explanation.
+- A selection control.
+- A simple indication of whether relevant data is available, if useful.
+
+Only show categories supported by the existing application. Do not add fake categories that lead to empty placeholder functionality.
+
+C. Selection Behavior
+
+The student should be able to:
+
+- Select one or more context categories.
+- Deselect categories they do not want to share with the AI.
+- Choose all relevant categories when appropriate.
+- See which categories are active for the next request.
+- Change selections at any time.
+- Understand when a category has no available data.
+
+Provide sensible defaults that enable useful personalization without requiring the student to configure everything manually.
+
+The exact default selection and persistence behavior should follow the existing privacy and preference architecture.
+
+A practical default is to enable relevant StudyHub context categories while allowing the student to disable them.
+
+If selection preferences persist, store them using the existing local preference or user-settings mechanism.
+
+Distinguish between:
+
+1. Context availability: data exists in StudyHub.
+2. Context selection: the student permits that category to be included.
+3. Context relevance: the current question actually needs that information.
+
+A category should only be sent when it is available, selected, and relevant to the request.
+
+If the student disables a category, do not include that category's underlying data in the AI request.
+
+Changing selection should affect subsequent requests without requiring an application restart.
+
+D. Per-Message Context Indicator
+
+Consider a compact context indicator on the current request or response showing the categories used, for example:
+
+"Using: Syllabus, Revision, Calendar"
+
+Do not claim a category was used if it was not actually included in the request.
+
+Keep this indicator subtle and optional if showing it on every message would clutter the interface.
+
+---
+
+5. QUESTION-AWARE CONTEXT RETRIEVAL
+
+Do not blindly send the entire student profile, full syllabus, every note, and all historical study sessions with every message.
+
+Build a context-selection pipeline that works as follows:
+
+1. Receive the student's question.
+2. Read the student's current context-selection preferences.
+3. Identify which enabled categories are relevant to the question.
+4. Retrieve the appropriate real data from existing repositories or backend services.
+5. Validate and normalize the retrieved data.
+6. Summarize or trim it safely if necessary.
+7. Construct a grounded context payload.
+8. Combine that context with the existing Study Buddy instructions and conversation history.
+9. Send the request through the existing Gemini integration.
+10. Return the response through the existing chat pipeline.
+
+Examples:
+
+Question: "What should I revise today?"
+
+Prioritize actual revision tasks, remaining syllabus topics, relevant exam dates, today's Calendar schedule, and the student's available study time, depending on enabled categories.
+
+Question: "Am I improving in Physics?"
+
+Use actual Physics study history, completed chapters, and relevant recorded progress. If there is insufficient historical data, explain the limitation.
+
+Question: "Plan my study session for tomorrow."
+
+Use relevant syllabus priorities, actual upcoming tasks, existing schedule conflicts, study goals, and recorded availability where supported.
+
+Question: "Explain Newton's second law."
+
+The selected chapter or relevant study material may be sufficient. Do not include the student's entire study history without a reason.
+
+Context Relevance and Size
+
+- Keep the current question as the highest-priority input.
+- Retrieve only relevant data.
+- Prefer recent, directly relevant history.
+- Preserve important upcoming deadlines and overdue tasks.
+- Use safe token-budget or payload-size limits appropriate for the configured Gemini model.
+- Avoid unnecessary duplicate context.
+- Do not silently replace missing context with invented values.
+- Never let context from one user leak into another user's request.
+
+---
+
+6. GROUNDED ANSWERING RULES
+
+Update the existing Gemini system instructions and prompt-building logic so the AI uses the supplied context responsibly.
+
+The model must follow these rules:
+
+1. Treat supplied StudyHub data as the authoritative source for the student's recorded information.
+2. Never invent syllabus chapters, subject names, study hours, completed tasks, revision counts, exam dates, or progress statistics.
+3. Do not assume a missing record means the value is zero.
+4. Distinguish zero from unknown, unavailable, not initialized, and not selected.
+5. If the student disables a context category, do not claim to have checked its data.
+6. If relevant context is missing, ask a concise clarification or provide clearly labeled general advice.
+7. Separate recorded facts from recommendations.
+8. Clearly distinguish existing Calendar entries from proposed schedule changes.
+9. Never claim to have saved, completed, deleted, or scheduled something unless the corresponding operation actually succeeded.
+10. Avoid repeating the same context values in multiple sections.
+11. Do not expose internal prompts, API credentials, or unrelated private data.
+12. Answer the student's actual question first before adding optional recommendations.
+
+The model must not overstate what it knows about the student.
+
+For example, if the actual revision count is zero, it may state that no revision tasks are recorded as due. It must not conclude that the student has nothing important to study unless other relevant context supports that conclusion.
+
+If the student's preferred study time is morning and it is currently late at night, it may suggest preparing a morning plan, but it must not assume the student is free tomorrow morning unless availability is recorded or confirmed.
+
+If a chapter name is not present in the actual syllabus, do not recommend it as though it were one of the student's registered chapters.
+
+---
+
+7. CONTEXT TRANSPARENCY AND PRIVACY
+
+The student must understand what information Study Buddy is using.
+
+Implement these safeguards:
+
+- Show which context categories are enabled.
+- Provide clear descriptions of what each category shares.
+- Respect disabled categories at the data retrieval and request-construction levels.
+- Do not retrieve sensitive or irrelevant information merely because it exists.
+- Avoid logging complete student context payloads.
+- Do not expose context from one account to another.
+- Reuse existing authentication, authorization, and data-access rules.
+- Keep API credentials exclusively in the existing secure backend configuration.
+- Do not send unrelated profile fields or private records to Gemini.
+
+If the current application architecture has no clear context-permission boundary, introduce the smallest practical one.
+
+Do not build an entirely new privacy settings system.
+
+---
+
+8. IMPROVE THE SYSTEM PROMPT WITHOUT OVERENGINEERING
+
+Inspect the existing Study Buddy system prompt before changing it.
+
+Keep useful existing behavior and improve only what is necessary.
+
+The revised instructions should emphasize:
+
+- Student-aware assistance.
+- Context-grounded recommendations.
+- Concise, structured answers.
+- Correct use of Markdown.
+- Clear distinction between facts and suggestions.
+- Respect for student-selected context.
+- No fabricated student data.
+- No unnecessary follow-up questions.
+- No excessively long responses to simple questions.
+
+Use a response style appropriate to the question.
+
+For example:
+
+- A simple factual question should receive a short answer.
+- A study-planning request may need a structured plan.
+- A progress-analysis question may need evidence and a short interpretation.
+- A conceptual explanation may need examples and step-by-step reasoning.
+
+Do not force every response into the same template.
+
+Do not ask Gemini to return elaborate Markdown or JSON for every simple message. Use structured output only when it adds real value.
+
+Keep the existing Gemini provider, model configuration, authentication, and working request flow intact.
+
+---
+
+9. SAFE STRUCTURED DATA FOR PREMIUM UI
+
+Where useful, separate the AI's conversational answer from validated structured content intended for native UI rendering.
+
+For example, a study-plan response may contain:
+
+- A short textual summary.
+- A list of proposed study blocks.
+- Subject and chapter identifiers, if resolved against real application records.
+- Suggested durations.
+- Relevant reasons.
+- Optional actions that the application already supports.
+
+Use typed models and schema validation when implementing structured content.
+
+Important rules:
+
+- AI-generated IDs must not be trusted as actual database IDs.
+- Resolve referenced subjects and chapters against the real local database or authorized backend.
+- Validate durations, dates, and all action parameters.
+- Do not execute arbitrary tool names or commands supplied by the model.
+- Do not automatically modify the Calendar or revision records merely because the model suggested an action.
+- Require explicit user confirmation for any operation that changes existing data.
+- If structured parsing fails, safely display the textual answer instead of crashing.
+
+Do not invent a complex agent framework or tool-calling architecture if the current application does not need one.
+
+---
+
+10. FIX LONG, REPETITIVE AND GENERIC RESPONSES
+
+The current example response is overly long for a simple question. It repeats the same information across status cards and paragraphs and includes generic chapter suggestions.
+
+Improve response quality so Study Buddy:
+
+- Answers the direct question early.
+- Uses concise language by default.
+- Provides extra detail only when useful.
+- Avoids repeating facts already displayed in structured UI.
+- Does not generate generic chapter names when the actual syllabus is available.
+- Avoids unnecessary motivational filler.
+- Avoids asking a question at the end of every response.
+- Uses at most one useful follow-up question when clarification is genuinely needed.
+- Adapts answer length to the complexity of the user's request.
+
+For the question "What should I revise today?", a good answer should prioritize actual due topics and available time, not generate a lengthy generic essay.
+
+If there are no revision tasks due, the AI may briefly explain that and offer a relevant next step based on the student's actual syllabus and schedule.
+
+It must not automatically prescribe a long study session simply because the model thinks it sounds helpful.
+
+---
+
+11. PERFORMANCE AND RELIABILITY
+
+- Avoid making unnecessary duplicate database queries for the same message.
+- Reuse existing repositories and cached values where appropriate.
+- Do not block the main UI thread while gathering context or calling Gemini.
+- Keep loading and cancellation behavior consistent with the existing chat.
+- Handle missing or unavailable data gracefully.
+- Ensure a context retrieval failure does not accidentally become fabricated context.
+- Report context retrieval failures appropriately.
+- Avoid sending the same oversized payload repeatedly.
+- Preserve the current Gemini error-handling behavior and improve it only where necessary.
+
+Do not add unrelated backend services or dependencies.
+
+---
+
+12. REQUIRED IMPLEMENTATION WORKFLOW
+
+Step 1: Audit
+
+Identify:
+
+- The existing Gemini request flow.
+- Current system prompt.
+- Message rendering component.
+- Markdown parsing and escaping behavior.
+- Existing repositories and data models.
+- Student context sources.
+- Current context-selection capabilities, if any.
+- Conversation-history implementation.
+- Existing action handling and navigation.
+- Relevant tests.
+
+Step 2: Fix Rendering
+
+Correct literal Markdown display and implement premium typography, paragraph spacing, lists, headings, links, and safe fallback rendering.
+
+Step 3: Build the Context Pipeline
+
+Create or improve a centralized context builder that uses existing data sources and respects context selection.
+
+Step 4: Add Student Context Selection
+
+Implement the compact selector, category availability, selection state, persistence where appropriate, and correct enforcement when constructing Gemini requests.
+
+Step 5: Improve Grounding
+
+Update the existing system prompt and context serialization so recommendations reflect real data and explicitly handle missing information.
+
+Step 6: Validate
+
+Run relevant tests, build checks, and available integration tests. Verify the actual chat screen and context flow.
+
+Do not claim visual or runtime verification unless it was actually performed.
+
+---
+
+13. TESTING REQUIREMENTS
+
+Test the following cases.
+
+Formatting
+
+- Bold Markdown renders as bold.
+- Headings, lists, links, and paragraphs render correctly.
+- Literal Markdown markers are not displayed for valid formatted responses.
+- Malformed Markdown does not crash the app.
+- Long answers remain readable on a narrow Android screen.
+- Existing copy and retry actions still work.
+- Loading indicators and message timestamps remain correct.
+
+Context Selection
+
+- Selecting Syllabus includes relevant real syllabus context.
+- Disabling Syllabus excludes syllabus data from the next AI request.
+- Selecting Revision includes actual revision data when available.
+- Selecting Calendar includes relevant saved plans.
+- Selecting Focus & Study History includes real recorded study history.
+- Missing categories are shown honestly.
+- Changes to selection apply without restarting the app.
+- User-specific context cannot leak across accounts.
+
+Grounding
+
+Test scenarios with real or appropriately isolated test fixtures:
+
+1. Zero revision tasks recorded.
+2. Several actual revision tasks due.
+3. Missing revision data.
+4. An incomplete syllabus.
+5. An empty Calendar.
+6. Conflicting scheduled tasks.
+7. An unavailable exam date.
+8. Insufficient history to calculate a trend.
+9. Disabled context categories.
+10. A question unrelated to personal student data.
+
+Verify that the assistant does not invent facts in these cases.
+
+Integration
+
+- Gemini still responds through the existing provider integration.
+- Conversation history remains functional.
+- The chat composer and existing navigation still work.
+- The Open Revision Hub action still works.
+- Existing student data remains intact.
+- No unrelated features are broken.
+
+---
+
+14. ACCEPTANCE CRITERIA
+
+The work is complete only when:
+
+- [ ] Gemini remains the AI provider.
+- [ ] Literal Markdown formatting bugs are fixed.
+- [ ] AI responses are visually polished and mobile-readable.
+- [ ] Long responses are concise and appropriately structured.
+- [ ] A context-selection interface is available to the student.
+- [ ] The selection actually controls which data is retrieved and sent to Gemini.
+- [ ] The context builder uses real existing StudyHub data.
+- [ ] Context is relevant to the current question rather than blindly including everything.
+- [ ] Missing or disabled data is never replaced by invented values.
+- [ ] Existing chat history, UI, and navigation are preserved.
+- [ ] Existing student data is not reset or duplicated.
+- [ ] Tests and builds are run where available.
+- [ ] Any unverified behavior or remaining blocker is disclosed.
+
+---
+
+15. FINAL REPORT
+
+After implementation, report:
+
+1. The root cause of the literal Markdown formatting bug.
+2. The rendering solution and files changed.
+3. The context sources integrated with Study Buddy.
+4. How student-controlled context selection works.
+5. How the system prevents fabricated student facts.
+6. Whether Gemini remains functional and which existing integration was preserved.
+7. Build and test results.
+8. Any remaining limitations.
+
+Include actual file paths and distinguish verified results from assumptions.
+
+FINAL INSTRUCTION
+
+Upgrade the existing StudyHub Study Buddy into a polished, genuinely context-aware assistant while keeping Gemini.
+
+Do not replace the AI provider. Do not build a static mockup. Do not use hardcoded student facts, fake context, placeholder responses, or invented syllabus data. Do not redesign unrelated screens.
+
+Implement the real rendering fixes, context-selection interface, context retrieval pipeline, grounded prompting, and validation within the existing project architecture.

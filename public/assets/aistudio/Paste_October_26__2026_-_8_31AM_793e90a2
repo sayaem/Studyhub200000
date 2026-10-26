@@ -1,0 +1,799 @@
+STUDYHUB MIDNIGHT INTELLIGENCE 2.0
+
+Safe Daily Reset, Persistent History, Accurate Analytics & AI Context Preservation
+
+ROLE
+
+Act as a senior Android engineer, application architect, database integrity specialist, time-and-date handling expert, analytics engineer, and AI context engineering specialist.
+
+Your mission is to audit and improve the existing StudyHub application so that daily UI state transitions correctly at midnight while preserving every valuable student record, historical study activity, task lifecycle, and AI-relevant piece of information.
+
+This is a targeted reliability and data-integrity enhancement to the existing application.
+
+Do not rebuild StudyHub. Do not redesign unrelated screens. Do not delete historical data. Do not reset the database. Do not replace the existing Gemini integration.
+
+Inspect the actual project, understand its current architecture, implement the smallest safe changes required, and verify the results using available tests and build tools.
+
+---
+
+1. PRIMARY OBJECTIVES
+
+Implement the following agreed behaviors.
+
+1. Daily UI counters must represent the current local calendar day.
+2. Daily goal progress must start fresh for the new day without destroying the previous day's progress.
+3. Historical study sessions, completed tasks, revision records, chapter progress, and other student information must remain available.
+4. Incomplete tasks must retain their original due dates and appear as overdue when appropriate.
+5. Overdue tasks must remain accessible from the relevant Today view without being falsely treated as newly scheduled tasks.
+6. Streaks must be calculated according to the existing StudyHub streak rules and actual recorded activity.
+7. Running Focus sessions must survive midnight without being cancelled or reset.
+8. The application must recover correctly if it was closed, killed, or offline at midnight.
+9. Study Buddy must retain access to relevant historical information through its existing Gemini-powered context pipeline, subject to the student's context selections and privacy rules.
+10. Current-day information, historical information, overdue tasks, upcoming tasks, and unavailable data must remain distinguishable.
+
+The fundamental rule is: a new calendar day changes the daily view, not the student's history.
+
+---
+
+2. MANDATORY PROJECT INSPECTION
+
+Before modifying code, inspect the actual repository and identify:
+
+- Application framework and architecture.
+- Existing navigation and state-management approach.
+- Home dashboard and daily summary components.
+- Focus timer implementation and persistence mechanism.
+- Calendar and task-management repositories.
+- Smart Revision functionality, if implemented.
+- Daily goal and streak calculations.
+- Stats and analytics calculations.
+- Student profile, syllabus, and chapter-progress storage.
+- Existing database tables, entities, repositories, and migrations.
+- Study Buddy's Gemini integration.
+- AI context-building and prompt-construction logic.
+- Local date and timezone handling.
+- Background scheduling, alarms, and lifecycle listeners.
+- Existing caching and derived-state mechanisms.
+- Current tests, build commands, and dependency configuration.
+
+Search the repository for logic involving:
+
+- Midnight or daily reset.
+- Current-day counters.
+- Daily goals and completion.
+- Streak reset or increment.
+- Task rollover and overdue status.
+- Focus session start and completion timestamps.
+- Date grouping and time-zone conversion.
+- Historical record deletion or cleanup.
+- Study Buddy context retrieval and serialization.
+
+Identify the actual source of every relevant displayed value.
+
+Do not assume a framework, database schema, table name, class name, or reset implementation without inspecting the project.
+
+If existing behavior is already correct, preserve it. Avoid rewriting working components unnecessarily.
+
+After inspection, proceed with implementation rather than stopping at an audit, unless a genuine blocker prevents safe changes.
+
+---
+
+3. CORE DATA-INTEGRITY CONTRACT
+
+The following rules are mandatory throughout the implementation.
+
+3.1 Historical records are not daily UI state
+
+Distinguish between:
+
+Persistent records
+
+- Completed Focus sessions.
+- Session start and end timestamps.
+- Recorded study duration.
+- Daily goal history.
+- Completed and incomplete tasks.
+- Original task due dates.
+- Task completion timestamps.
+- Chapter completion history.
+- Revision attempts and self-ratings.
+- Streak history, where stored.
+- Student profile and preferences.
+- Syllabus and academic progress.
+- Admission targets and exam dates.
+- Notes and study materials.
+- Conversation history and other relevant AI context.
+
+Derived current-day state
+
+- Today's total study time.
+- Today's completed Focus session count.
+- Today's goal progress.
+- Today's completed-task count.
+- Today's revision summary.
+- Today's scheduled-task summary.
+- Other date-dependent dashboard values.
+
+Persistent records must not be deleted or overwritten merely because the local date changed.
+
+Current-day values should preferably be derived from existing records using the established calculation logic.
+
+If the application already stores daily snapshots or counters, preserve their history and reuse the existing model where appropriate. Do not introduce unnecessary schema changes.
+
+3.2 No destructive midnight operation
+
+Do not implement midnight logic that:
+
+- Clears all study-session records.
+- Deletes incomplete tasks.
+- Deletes or recreates the syllabus.
+- Resets chapter completion.
+- Deletes previous daily statistics.
+- Clears revision history.
+- Clears conversation history.
+- Deletes profile settings or goals.
+- Erases streak history.
+- Reinitializes the database.
+- Replaces actual student records with default or mock data.
+
+A new day must not be treated as a reason to execute a database wipe, destructive migration, or broad storage reset.
+
+3.3 Preserve record identity
+
+When refreshing daily state or changing a task's status:
+
+- Preserve existing record IDs.
+- Preserve original timestamps.
+- Preserve original due dates.
+- Preserve completion timestamps.
+- Preserve relationships between tasks, subjects, chapters, sessions, and students.
+- Do not duplicate existing records.
+- Do not silently convert historical records into current-day records.
+
+Any legitimate record update must follow the existing application rules and be traceable to the relevant user action or lifecycle event.
+
+---
+
+4. DAILY COUNTERS AND GOAL PROGRESS
+
+4.1 New-day calculation
+
+At the transition to a new local calendar date, current-day UI values must reflect the new date.
+
+Examples include:
+
+- Today's study duration.
+- Today's completed Focus sessions.
+- Today's goal progress.
+- Today's completed-task count.
+- Today's revision count, if supported.
+- Other existing daily counters.
+
+Calculate each value from valid records belonging to the current local day, using the existing application's authoritative calculation rules.
+
+If no qualifying activity exists for the new day, the corresponding daily total may be zero.
+
+However, distinguish zero from missing, unavailable, or failed-to-load data.
+
+Never turn a data retrieval failure into a false zero.
+
+4.2 Preserve previous-day values
+
+Suppose the student recorded 2 hours and 30 minutes of study on October 26.
+
+When October 27 begins:
+
+- October 27's daily study total starts at zero if no activity has occurred.
+- October 26's total remains 2 hours and 30 minutes in historical analytics.
+- Completed sessions from October 26 remain available.
+- Previous goal progress remains recorded.
+- Previous study streak evidence remains available.
+- Study Buddy can retrieve the previous day's information when relevant and permitted.
+
+The current-day dashboard and historical analytics must not use the same mutable counter in a way that erases the previous day.
+
+4.3 Daily goal behavior
+
+Preserve the existing daily goal configuration and its meaning.
+
+At the beginning of a new local day:
+
+- New-day progress must reflect only valid activity attributed to that day.
+- The configured daily target remains unchanged.
+- Previous-day goal completion remains available in history.
+- Previous-day progress must not carry into the new day's completed amount unless the existing feature explicitly defines a separate carry-over concept.
+- A goal must not automatically be marked completed just because the date changed.
+- A missed goal must not cause its historical record to disappear.
+
+Do not change the goal calculation formula unless inspection reveals an actual bug that must be corrected to satisfy these requirements.
+
+If a goal is configured to use Focus duration, use the existing valid Focus-session rules rather than counting scheduled or abandoned time as completed study.
+
+---
+
+5. INCOMPLETE TASKS AND OVERDUE BEHAVIOR
+
+This section is critical.
+
+5.1 Preserve the original task
+
+When a task's original due date has passed and the task remains incomplete:
+
+- Preserve the original due date.
+- Preserve the task's identity.
+- Preserve its subject and chapter relationships.
+- Preserve its existing status and completion history as appropriate.
+- Derive or update its overdue status according to the existing task lifecycle.
+- Keep the task accessible from the relevant Today interface.
+- Display it in the overdue section where appropriate.
+
+Do not automatically delete it or silently mark it completed.
+
+5.2 Overdue does not mean newly scheduled
+
+An overdue task is not automatically a new task for the current day.
+
+The implementation must distinguish:
+
+- Originally scheduled tasks for today.
+- Overdue tasks from previous dates.
+- Upcoming tasks.
+- Completed tasks.
+- Cancelled tasks, if supported.
+- Proposed tasks that have not yet been confirmed or saved.
+
+The Today screen may provide access to overdue tasks, but must not falsely label them as newly scheduled for today.
+
+Daily scheduled-task counts must follow the existing application's intended semantics and must not count the same task multiple times.
+
+If the existing UI has a separate overdue section, use it. If it does not, make the smallest suitable addition consistent with existing components.
+
+Do not redesign the Calendar screen.
+
+5.3 Rescheduling behavior
+
+When a student explicitly reschedules an overdue task:
+
+- Preserve the original due-date information if the existing data model supports it.
+- Update the planned due date according to the existing rescheduling workflow.
+- Preserve the task's history and identity.
+- Ensure the task is not duplicated.
+- Update the relevant current-day or future-day views.
+- Keep analytics consistent with the established rules.
+
+Do not automatically reschedule every overdue task to today.
+
+Do not invent new schedules or mark a task as completed without the appropriate user action or existing valid completion event.
+
+5.4 Revision tasks
+
+Treat Smart Revision tasks according to their existing lifecycle.
+
+An overdue Calendar task and a revision task due for review are different concepts.
+
+- Preserve revision history and previous self-ratings.
+- Preserve original scheduling information.
+- Determine revision due status using the existing revision rules.
+- Do not create duplicate revision records at midnight.
+- Do not automatically mark an overdue revision as completed.
+- Keep the actual due status available to Study Buddy.
+
+If the application supports Hard, Okay, and Easy ratings, preserve them as historical learning signals.
+
+---
+
+6. STREAK CALCULATION
+
+Streaks must reflect actual recorded activity and the existing StudyHub streak definition.
+
+Before editing streak logic, identify:
+
+- What qualifies as a successful study day.
+- Whether streaks depend on daily goal completion or another criterion.
+- How the current day is represented.
+- How missed days affect a streak.
+- Whether historical streak data is stored or derived.
+- How time zones and backdated records are handled.
+
+Preserve these established rules unless an actual defect prevents correct behavior.
+
+Required behavior:
+
+1. Midnight must not automatically increment a streak.
+2. Midnight must not blindly set a streak to zero.
+3. Historical streak evidence must remain intact.
+4. A completed prior day must not become incomplete simply because the date changed.
+5. A new day must be evaluated from its own actual activity.
+6. Repeated app launches or date-refresh operations must not double-count a successful day.
+7. Recalculating a streak must produce a consistent result from the same underlying records.
+8. Correcting an old record must not corrupt the streak history.
+9. A missing activity record must not be treated as proof of inactivity if the data source failed to load.
+
+If the existing streak rules are ambiguous, document the ambiguity and avoid silently inventing a new policy.
+
+---
+
+7. FOCUS SESSIONS CROSSING MIDNIGHT
+
+A running Focus session must not be cancelled or reset simply because midnight occurs.
+
+Example:
+
+- Session starts at 11:45 PM on October 26.
+- Session continues past midnight.
+- Session completes at 12:15 AM on October 27.
+
+Required behavior:
+
+- The timer continues running.
+- The active session is not discarded.
+- Its start timestamp remains unchanged.
+- Its end timestamp is recorded when the session actually ends.
+- Elapsed duration is calculated correctly.
+- App restart and process recreation recover the session using the existing persistence mechanism.
+- Session completion is recorded only once.
+- The session is not accidentally duplicated during recovery.
+
+Use the existing timer architecture and reliable timestamp-based calculations.
+
+Do not rely solely on a UI countdown or in-memory timer value for historical duration.
+
+7.1 Daily attribution of cross-midnight sessions
+
+Inspect how StudyHub currently attributes study duration to dates.
+
+Preserve the established rule if it is consistent and documented.
+
+If analytics are intended to represent time actually studied during each local calendar day, split cross-midnight duration at the local-day boundary for daily aggregation while preserving the original session as one continuous historical session.
+
+For example, a session spanning 11:45 PM to 12:15 AM contains 15 minutes before midnight and 15 minutes after midnight.
+
+If daily attribution is changed to support this behavior:
+
+- Do not create duplicate historical Focus sessions.
+- Do not count the same elapsed minute twice.
+- Preserve the original session record and timestamps.
+- Keep the aggregate totals consistent with the session's actual duration.
+- Update the relevant calculations and tests together.
+
+Do not introduce this change blindly if the existing product uses a different established attribution rule. Inspect first, then document and implement the appropriate consistent behavior.
+
+---
+
+8. DATE, TIMEZONE, AND LIFECYCLE RELIABILITY
+
+Do not depend on a single exact-midnight timer to update the application.
+
+Android may suspend the application, kill its process, delay background work, or leave it closed across multiple days.
+
+Implement a reliable date-transition mechanism using the existing architecture.
+
+Required lifecycle behavior
+
+Check or refresh date-dependent state when appropriate:
+
+- The application enters the foreground.
+- The application is recreated after process death.
+- Relevant dashboard or date-sensitive screens become active.
+- Existing background scheduling mechanisms run.
+- A local date boundary is detected.
+
+Use the existing lifecycle and scheduling mechanisms where practical.
+
+Do not add unnecessary services, dependencies, alarms, or background workers.
+
+The application must recover correctly even if it misses the actual midnight moment.
+
+Idempotency
+
+The same new-day transition may be detected multiple times.
+
+Ensure that repeated checks:
+
+- Do not create duplicate tasks.
+- Do not duplicate Focus sessions.
+- Do not increment streaks repeatedly.
+- Do not reset historical data.
+- Do not create duplicate daily snapshots.
+- Do not send duplicate notifications solely because the date check ran again.
+
+Prefer deterministic derivation from existing records over destructive one-time reset operations.
+
+If a stored transition marker is needed, use the smallest safe mechanism consistent with the existing architecture.
+
+Timezone and clock changes
+
+- Preserve historical timestamps.
+- Use the project's established timezone convention consistently.
+- Calculate local-day boundaries correctly.
+- Do not assume every calendar day contains exactly 24 hours.
+- Do not delete records when the device timezone changes.
+- Do not silently rewrite historical timestamps.
+- Recompute date-dependent display values when necessary.
+- Handle a device clock moving forward or backward without duplicate session or task creation.
+
+If the app supports multiple time zones or server timestamps, distinguish absolute timestamps from local display dates.
+
+Document any existing limitation instead of claiming unsupported timezone behavior.
+
+---
+
+9. STUDY BUDDY AND AI CONTEXT PRESERVATION
+
+Study Buddy currently uses Gemini. Keep the existing provider and integration.
+
+Do not migrate to OpenRouter, replace the AI backend, or introduce a new chat system.
+
+The objective is to ensure that midnight changes do not remove information needed by the existing AI context pipeline.
+
+9.1 Context categories
+
+Preserve and make available, where implemented and permitted:
+
+Student profile and preferences
+
+- Academic information.
+- Study preferences.
+- Daily goals.
+- Target examinations.
+- Other existing relevant profile data.
+
+Syllabus and chapter progress
+
+- Actual subjects and chapters.
+- Completion status.
+- Remaining syllabus.
+- Recorded difficulty or confidence ratings.
+- Relevant academic progress.
+
+Focus history
+
+- Historical session timestamps.
+- Actual study duration.
+- Subject-level study time.
+- Session completion status.
+- Daily and weekly study totals.
+
+Calendar and tasks
+
+- Today's scheduled tasks.
+- Overdue tasks.
+- Upcoming plans.
+- Original task due dates.
+- Completion history.
+- Approved rescheduling changes.
+
+Revision and Stats
+
+- Revision due dates.
+- Previous revision ratings.
+- Revision completion history.
+- Actual progress statistics.
+- Goal history and streak evidence.
+
+Exams, admission, notes, and conversations
+
+- Existing examination dates and targets.
+- Application status, where supported.
+- Student notes and saved materials.
+- Relevant conversation history.
+
+Do not invent data for features that are not implemented.
+
+9.2 Context semantics
+
+The context builder must distinguish at least these states:
+
+- Current-day records.
+- Historical records.
+- Overdue tasks.
+- Upcoming tasks.
+- Missing or unavailable data.
+- Context categories not selected by the student.
+
+Do not collapse these states into one generic summary.
+
+For example, a zero current-day study duration must not erase the fact that the student studied for several hours yesterday.
+
+9.3 Retrieval behavior
+
+When the student asks a question:
+
+1. Read the current local date.
+2. Read the student's existing context-selection preferences.
+3. Identify relevant enabled categories.
+4. Retrieve the actual data from existing repositories or authorized backend services.
+5. Distinguish current-day records from historical records.
+6. Include relevant historical information when appropriate.
+7. Validate and serialize the context.
+8. Send the request through the existing Gemini integration.
+9. Preserve the resulting conversation according to existing behavior.
+
+Do not blindly send the student's entire history with every request.
+
+Use relevant context and safe payload limits.
+
+If data cannot be retrieved, report it as unavailable rather than fabricating a value.
+
+If the student has disabled a context category, do not include that category's underlying data in the AI request.
+
+9.4 Prevent stale AI context
+
+If Study Buddy caches daily context or derived summaries, ensure that date-dependent portions are refreshed after a local date change.
+
+Historical context must remain accessible.
+
+Do not clear the entire context cache if doing so would erase persistent conversation or historical records.
+
+Separate current-day cache invalidation from historical data retention.
+
+Do not let a stale cached value incorrectly report yesterday's study time as today's total.
+
+9.5 Grounded answers
+
+The existing Gemini system prompt and context builder must continue distinguishing recorded facts from recommendations.
+
+Study Buddy must not:
+
+- Invent completed chapters.
+- Invent study durations.
+- Invent revision tasks.
+- Invent exam dates.
+- Claim an overdue task was scheduled today.
+- Treat missing records as zero.
+- Claim an action was saved without a successful operation.
+- Assume that the student has no historical activity because today's activity is zero.
+
+Do not redesign Study Buddy's UI as part of this task.
+
+---
+
+10. STATS AND ANALYTICS CONSISTENCY
+
+Inspect all existing daily, weekly, and historical calculations affected by the date transition.
+
+Ensure that:
+
+- Today's totals use the current local date.
+- Yesterday's totals remain unchanged.
+- Weekly totals remain consistent across midnight.
+- Subject-level aggregates remain accurate.
+- Cross-midnight sessions are not double-counted.
+- Goal completion history remains accurate.
+- Streak calculations use the established rules.
+- Overdue tasks do not become falsely scheduled current-day tasks.
+- Completed-task counts do not count the same record twice.
+
+Use the existing calculation logic and data sources wherever possible.
+
+Do not create a new analytics engine or redesign the Stats screen.
+
+If multiple screens calculate the same metric differently, identify the inconsistency and make the smallest safe correction using a shared existing service or equivalent architecture-appropriate solution.
+
+Do not silently change the meaning of existing metrics.
+
+---
+
+11. DATABASE AND MIGRATION SAFETY
+
+Before modifying persistence code, inspect the actual schema and existing migration strategy.
+
+Requirements:
+
+- Do not reset the database.
+- Do not drop unrelated tables.
+- Do not delete historical records.
+- Do not rename unrelated tables, entities, or fields.
+- Do not introduce a new database solely to support midnight behavior.
+- Reuse existing IDs and relationships.
+- Avoid schema changes when existing records can support the required behavior.
+- Preserve compatibility with existing installed user databases.
+
+If a migration is genuinely necessary:
+
+1. Explain why it is required.
+2. Make it backward-compatible where possible.
+3. Preserve all existing records.
+4. Test the migration against representative existing data.
+5. Verify relationships, timestamps, and record counts before and after.
+6. Include a safe recovery strategy where the architecture supports it.
+7. Do not claim data preservation unless verified.
+
+Never run a destructive reset to make the implementation easier.
+
+---
+
+12. IMPLEMENTATION APPROACH
+
+Implement the feature using the smallest safe set of changes.
+
+Prefer:
+
+- Existing repositories.
+- Existing session and task models.
+- Existing date/time utilities.
+- Existing goal and streak calculation logic.
+- Existing background-work mechanisms.
+- Existing AI context-building services.
+- Existing cache and state-management patterns.
+
+Do not add a new package unless genuinely necessary.
+
+Do not perform a general cleanup or unrelated refactor.
+
+If existing behavior is correct, retain it.
+
+If an existing defect prevents the agreed behavior, fix the specific root cause and add an appropriate test.
+
+Do not replace real functionality with mock data or placeholder implementations.
+
+---
+
+13. REQUIRED TEST SCENARIOS
+
+Create or update tests appropriate to the existing project.
+
+Use deterministic timestamps and an injectable clock or equivalent test mechanism where practical.
+
+A. Daily counter tests
+
+1. Previous day contains valid completed Focus sessions.
+2. New day contains no sessions.
+3. Current-day duration is zero while previous-day history remains intact.
+4. New-day activity updates today's total correctly.
+5. Repeated refreshes produce identical results.
+6. Missing records are not confused with failed data retrieval.
+
+B. Task lifecycle tests
+
+1. A task is scheduled for the previous day and completed.
+2. A task is scheduled for the previous day and remains incomplete.
+3. An overdue task appears in the overdue section.
+4. The overdue task remains accessible from Today.
+5. Its original due date is preserved.
+6. It is not counted as a newly scheduled task.
+7. Repeated date checks do not duplicate the task.
+8. Explicit rescheduling preserves the relevant history.
+9. Completed and cancelled tasks follow existing lifecycle rules.
+10. Revision tasks remain distinct from ordinary Calendar tasks.
+
+C. Streak tests
+
+1. Previous day meets the existing streak criteria.
+2. Previous day misses the existing criteria.
+3. The new day has no activity.
+4. The new day receives valid study activity.
+5. Repeated refreshes do not double-increment the streak.
+6. Historical records remain unchanged.
+7. Backdated corrections produce consistent calculations.
+
+D. Focus session tests
+
+1. A session starts before midnight and ends before midnight.
+2. A session starts before midnight and completes after midnight.
+3. A running session survives app recreation.
+4. Session completion is recorded once.
+5. Duration is calculated accurately.
+6. Daily aggregation does not double-count minutes.
+7. Existing timer behavior remains intact.
+
+E. Lifecycle and date tests
+
+1. App remains open across midnight.
+2. App is closed during midnight and reopened the next day.
+3. App process is killed and recreated.
+4. Date transition is detected more than once.
+5. Device timezone changes.
+6. Device clock moves backward or forward.
+7. Relevant screens refresh without deleting historical information.
+
+F. AI context tests
+
+1. Today's study duration is zero while yesterday has valid history.
+2. Study Buddy can retrieve yesterday's study data when selected and relevant.
+3. An overdue task retains its original due date in context.
+4. A completed task is not represented as incomplete.
+5. Upcoming tasks remain distinct from overdue tasks.
+6. Missing history is represented as unavailable.
+7. Disabled context categories are excluded.
+8. Context caches refresh current-day values after midnight.
+9. Historical records and conversations remain intact.
+10. No student-specific context leaks across accounts.
+
+Use mocks or isolated test fixtures only for testing. Do not insert test data into a real user's production records.
+
+---
+
+14. BUILD AND VALIDATION
+
+Run the available checks supported by the actual project:
+
+- Relevant unit tests.
+- Relevant integration tests.
+- Database migration tests, if applicable.
+- Type checks and linting, where available.
+- Application build.
+- Existing navigation and feature regression checks.
+
+Manually inspect or test the following flows where runtime access is available:
+
+1. Open StudyHub before midnight.
+2. Record a Focus session.
+3. Leave a task incomplete.
+4. Cross the local-day boundary or simulate it with a test clock.
+5. Verify current-day UI values.
+6. Verify historical study records.
+7. Verify the overdue task.
+8. Verify streak calculation.
+9. Verify a running Focus session.
+10. Ask Study Buddy a question that requires previous-day context.
+11. Reopen the app after process recreation.
+12. Confirm no unrelated features have been broken.
+
+Do not claim exact-midnight background execution was tested if only a simulated date transition was tested.
+
+Do not claim data preservation without checking the relevant records or migration behavior.
+
+If a test cannot run, explain the limitation honestly.
+
+---
+
+15. ACCEPTANCE CRITERIA
+
+The implementation is accepted only when:
+
+- [ ] Midnight updates date-dependent UI state without deleting historical records.
+- [ ] Daily counters are derived from valid current-day activity.
+- [ ] Previous-day goal progress remains available.
+- [ ] Incomplete tasks preserve their original due dates.
+- [ ] Overdue tasks remain accessible without being falsely classified as newly scheduled.
+- [ ] No duplicate tasks are created by date transitions.
+- [ ] Streaks follow existing rules and are not double-counted.
+- [ ] Running Focus sessions survive midnight and process recreation.
+- [ ] Historical session duration remains accurate.
+- [ ] Timezone and lifecycle handling are consistent with the existing architecture.
+- [ ] Stats and analytics remain accurate.
+- [ ] Study Buddy retains access to relevant historical context.
+- [ ] Student context-selection and privacy rules remain enforced.
+- [ ] Existing Gemini integration remains in place.
+- [ ] No destructive database reset or unrelated migration occurs.
+- [ ] Existing syllabus, notes, goals, revisions, profile, Calendar, and other user data remain intact.
+- [ ] Tests and build checks have been run and their results reported.
+- [ ] Unverified behavior and remaining limitations are disclosed.
+
+---
+
+16. FINAL IMPLEMENTATION REPORT
+
+After making the changes, provide a concise but detailed report containing:
+
+1. Root cause: Existing midnight/reset issues found in the code.
+2. Files changed: Actual file paths and what each change does.
+3. Daily UI behavior: How current-day values are recalculated.
+4. Task lifecycle: How overdue tasks and original due dates are preserved.
+5. Focus sessions: How sessions crossing midnight are handled.
+6. Streaks: The existing rule identified and how its behavior was preserved.
+7. Historical data: Which records and persistence paths were verified.
+8. AI context: How Study Buddy retrieves relevant historical information after midnight.
+9. Timezone and lifecycle: What was implemented and what was actually tested.
+10. Database safety: Whether any schema change was necessary and how data preservation was verified.
+11. Tests and build: Exact commands or test suites run and their results.
+12. Limitations: Any unresolved issues or manual verification still needed.
+
+Separate verified results from assumptions.
+
+Do not claim that the application works perfectly merely because code changes were made.
+
+---
+
+FINAL NON-NEGOTIABLE INSTRUCTION
+
+Implement the agreed StudyHub midnight behavior in the existing project with the smallest safe set of changes.
+
+Midnight must refresh the current-day UI, not erase the student's history.
+
+Preserve original task dates, historical sessions, goal records, streak evidence, syllabus progress, revision history, student profile, conversations, and AI-relevant context.
+
+Keep Gemini and all existing app features intact.
+
+Inspect first, implement carefully, test the actual behavior, and report only what has been verified.
