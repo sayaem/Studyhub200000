@@ -8,7 +8,7 @@ workflows:
     
     # Use mac_mini_m2.
     # Supported alternatives include: linux, linux_x2, linux_x4, mac_mini_m1, mac_mini_m2
-    instance_type: mac_mini_m1
+    instance_type: mac_mini_m2
     
     environment:
       vars:
