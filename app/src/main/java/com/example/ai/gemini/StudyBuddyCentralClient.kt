@@ -112,9 +112,26 @@ class StudyBuddyCentralClient(
             // Acquire key
             val managedKey = keyManager.acquireKey(attemptedKeys)
             if (managedKey == null) {
-                // All available keys in cooldown or quarantined
+                val lastError = lastClassifiedError
+                if (lastError != null && (lastError.category == GeminiErrorCategory.AUTH_INVALID ||
+                            lastError.category == GeminiErrorCategory.PERMISSION_OR_BILLING ||
+                            lastError.category == GeminiErrorCategory.BAD_REQUEST)) {
+                    return BuddyAiResult.Error(
+                        errorMessage = lastError.userFacingMessage,
+                        canRetry = lastError.canRetry
+                    )
+                }
+
                 val waitMs = keyManager.getEarliestRetryWaitMs() ?: 60_000L
                 val waitSecs = (waitMs / 1000L).coerceAtLeast(1)
+                val allQuarantined = keyManager.areAllKeysQuarantined()
+
+                val errorMessage = if (allQuarantined) {
+                    "All configured Gemini API keys failed authentication. Please check your API keys in the Secrets panel."
+                } else {
+                    "All configured AI keys are temporarily busy. Please wait $waitSecs seconds before retrying."
+                }
+
                 GeminiObservability.recordMetrics(
                     GeminiRequestMetrics(
                         requestId = requestId,
@@ -123,18 +140,19 @@ class StudyBuddyCentralClient(
                         keyOpaqueId = "NoneAvailable",
                         latencyMs = System.currentTimeMillis() - startTime,
                         success = false,
-                        errorCategory = GeminiErrorCategory.ALL_KEYS_EXHAUSTED,
+                        errorCategory = if (allQuarantined) GeminiErrorCategory.AUTH_INVALID else GeminiErrorCategory.ALL_KEYS_EXHAUSTED,
                         retryCount = retryCount
                     )
                 )
                 return BuddyAiResult.Error(
-                    errorMessage = "All configured AI keys are temporarily busy. Please wait $waitSecs seconds before retrying.",
-                    isQuotaExhausted = true,
-                    canRetry = true
+                    errorMessage = errorMessage,
+                    isQuotaExhausted = !allQuarantined,
+                    canRetry = !allQuarantined
                 )
             }
 
-            val url = "https://generativelanguage.googleapis.com/v1beta/models/$activeModel:generateContent?key=${managedKey.key}"
+            val sanitizedRawKey = GeminiConfig.sanitizeKey(managedKey.key)
+            val url = "https://generativelanguage.googleapis.com/v1beta/models/$activeModel:generateContent?key=$sanitizedRawKey"
             val requestBody = payloadJson.toRequestBody("application/json; charset=utf-8".toMediaType())
             val httpRequest = Request.Builder()
                 .url(url)

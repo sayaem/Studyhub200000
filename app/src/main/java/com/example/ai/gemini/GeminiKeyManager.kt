@@ -43,9 +43,9 @@ class GeminiKeyManager(
         ManagedKey(key = rawKey, index = index)
     }
 
-    // Shared project quota tracking
+    // Shared project quota tracking per distinct key index
     private var sharedProjectQuotaUntilMs: Long = 0L
-    private var lastRateLimitTimes = mutableListOf<Long>()
+    private val rateLimitedKeysWindow = mutableMapOf<Int, Long>()
 
     val totalKeyCount: Int
         get() = managedKeys.size
@@ -108,13 +108,13 @@ class GeminiKeyManager(
                 val cooldown = retryAfterMs ?: config.keyCooldownMs
                 key.cooldownUntilMs = now + cooldown
 
-                // Track rate limit frequency across keys to detect shared project quota
-                lastRateLimitTimes.add(now)
-                // Keep only events from the last 30 seconds
-                lastRateLimitTimes.removeAll { now - it > 30_000L }
+                // Track rate limit frequency by distinct key index to detect genuine shared project quota
+                rateLimitedKeysWindow[key.index] = now
+                rateLimitedKeysWindow.entries.removeAll { now - it.value > 30_000L }
 
-                // If 2 or more different keys hit rate limits within 30s, treat as shared project quota
-                if (lastRateLimitTimes.size >= 2 && managedKeys.size > 1) {
+                // Only activate project-wide quota if 2 or more distinct keys (or 3+ for large key sets) hit rate limits within 30s
+                val threshold = if (managedKeys.size <= 3) 2 else 3
+                if (managedKeys.size > 1 && rateLimitedKeysWindow.size >= threshold) {
                     sharedProjectQuotaUntilMs = now + (retryAfterMs ?: config.keyCooldownMs)
                 }
             }
@@ -148,6 +148,20 @@ class GeminiKeyManager(
     }
 
     /**
+     * Returns true if all configured keys have been permanently quarantined due to auth errors.
+     */
+    suspend fun areAllKeysQuarantined(): Boolean = mutex.withLock {
+        managedKeys.isNotEmpty() && managedKeys.all { it.isQuarantined }
+    }
+
+    /**
+     * Returns the number of non-quarantined keys.
+     */
+    suspend fun getNonQuarantinedKeyCount(): Int = mutex.withLock {
+        managedKeys.count { !it.isQuarantined }
+    }
+
+    /**
      * Returns time in milliseconds until the earliest key cooldown expires, or null if all are quarantined.
      */
     suspend fun getEarliestRetryWaitMs(): Long? = mutex.withLock {
@@ -166,7 +180,7 @@ class GeminiKeyManager(
      */
     suspend fun resetAll() = mutex.withLock {
         sharedProjectQuotaUntilMs = 0L
-        lastRateLimitTimes.clear()
+        rateLimitedKeysWindow.clear()
         for (k in managedKeys) {
             k.isQuarantined = false
             k.cooldownUntilMs = 0L

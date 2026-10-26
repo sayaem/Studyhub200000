@@ -272,23 +272,23 @@ class GeminiIntelligentEngineTest {
         // Math problem
         val mathPlan = GeminiModelRouter.route("Calculate the vector cross product \\(\\vec{A} \\times \\vec{B}\\)")
         assertEquals(GeminiTaskCategory.MATHEMATICAL_PROBLEM_SOLVING, mathPlan.taskCategory)
-        assertEquals("gemini-3.1-pro-preview", mathPlan.primaryModel)
-        assertTrue(mathPlan.fallbackModels.contains("gemini-3.5-flash"))
+        assertEquals("gemini-2.5-pro", mathPlan.primaryModel)
+        assertTrue(mathPlan.fallbackModels.contains("gemini-2.5-flash"))
 
         // Science explanation
         val sciencePlan = GeminiModelRouter.route("Explain Faraday's law of electromagnetic induction in physics")
         assertEquals(GeminiTaskCategory.SCIENCE_EXPLANATION, sciencePlan.taskCategory)
-        assertEquals("gemini-3.1-pro-preview", sciencePlan.primaryModel)
+        assertEquals("gemini-2.5-pro", sciencePlan.primaryModel)
 
         // Quiz generation
         val quizPlan = GeminiModelRouter.route("Generate a 5-question practice quiz on Organic Chemistry")
         assertEquals(GeminiTaskCategory.QUIZ_GENERATION, quizPlan.taskCategory)
-        assertEquals("gemini-3.5-flash", quizPlan.primaryModel)
+        assertEquals("gemini-2.5-flash", quizPlan.primaryModel)
 
         // Study planning
         val planPlan = GeminiModelRouter.route("Create a 2-hour study routine and revision schedule for today")
         assertEquals(GeminiTaskCategory.STUDY_PLANNING, planPlan.taskCategory)
-        assertEquals("gemini-3.5-flash", planPlan.primaryModel)
+        assertEquals("gemini-2.5-flash", planPlan.primaryModel)
     }
 
     // 15. Request deduplication for rapid re-submits
@@ -448,5 +448,51 @@ class GeminiIntelligentEngineTest {
         val success = result as BuddyAiResult.Success
         assertEquals("Failover succeeded seamlessly on Key 2!", success.responseText)
         assertEquals(2, callCount.get())
+    }
+
+    // 19. Surrounding quotes sanitization in GeminiConfig
+    @Test
+    fun testKeySanitizationStripsQuotes() {
+        val rawQuotedKey = "\"AIzaSySanitizedKey1234567890123456789\""
+        val sanitized = GeminiConfig.sanitizeKey(rawQuotedKey)
+        assertEquals("AIzaSySanitizedKey1234567890123456789", sanitized)
+        assertTrue(GeminiConfig.isValidKey(rawQuotedKey))
+    }
+
+    // 20. Single-key rate limit does not lock out other keys
+    @Test
+    fun testSingleKeyRateLimitDoesNotLockoutOtherKeys() = runBlocking {
+        val key1 = "AIzaSyKey1_1111111111111111111111111"
+        val key2 = "AIzaSyKey2_2222222222222222222222222"
+        val key3 = "AIzaSyKey3_3333333333333333333333333"
+        val config = GeminiConfig(keys = listOf(key1, key2, key3))
+        val manager = GeminiKeyManager(config)
+
+        val k1 = manager.acquireKey()!!
+        assertEquals(key1, k1.key)
+
+        // Key 1 gets rate limited twice in a row
+        manager.recordFailure(k1, GeminiErrorCategory.RATE_LIMIT)
+        manager.recordFailure(k1, GeminiErrorCategory.RATE_LIMIT)
+
+        // Shared project quota MUST NOT be activated because only 1 distinct key hit rate limits!
+        assertFalse(manager.isSharedQuotaExhausted())
+
+        // Key 2 must be acquired successfully!
+        val k2 = manager.acquireKey()
+        assertNotNull(k2)
+        assertEquals(key2, k2?.key)
+    }
+
+    // 21. Quarantined keys propagate clear auth error
+    @Test
+    fun testQuarantinedKeysPropagateAuthErrorMsg() = runBlocking {
+        val key1 = "AIzaSyBadKey1_1111111111111111111111111"
+        val config = GeminiConfig(keys = listOf(key1))
+        val manager = GeminiKeyManager(config)
+
+        val acquired = manager.acquireKey()!!
+        manager.recordFailure(acquired, GeminiErrorCategory.AUTH_INVALID)
+        assertTrue(manager.areAllKeysQuarantined())
     }
 }
