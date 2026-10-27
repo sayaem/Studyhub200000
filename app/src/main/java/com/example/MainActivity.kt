@@ -9,11 +9,14 @@ import com.example.notifications.StudyHubNotificationManager
 import com.example.ui.StudyHubViewModel
 import com.example.ui.navigation.StudyHubApp
 
+import com.example.ai.configureAppCheck
+
 class MainActivity : ComponentActivity() {
     private val viewModel: StudyHubViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        configureAppCheck(this, intent)
         enableEdgeToEdge()
 
         val initialTargetRoute = intent?.getStringExtra(StudyHubNotificationManager.EXTRA_TARGET_ROUTE)
