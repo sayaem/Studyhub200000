@@ -272,23 +272,23 @@ class GeminiIntelligentEngineTest {
         // Math problem
         val mathPlan = GeminiModelRouter.route("Calculate the vector cross product \\(\\vec{A} \\times \\vec{B}\\)")
         assertEquals(GeminiTaskCategory.MATHEMATICAL_PROBLEM_SOLVING, mathPlan.taskCategory)
-        assertEquals("gemini-2.5-pro", mathPlan.primaryModel)
-        assertTrue(mathPlan.fallbackModels.contains("gemini-2.5-flash"))
+        assertEquals("gemini-3.1-pro-preview", mathPlan.primaryModel)
+        assertTrue(mathPlan.fallbackModels.contains("gemini-3.5-flash"))
 
         // Science explanation
         val sciencePlan = GeminiModelRouter.route("Explain Faraday's law of electromagnetic induction in physics")
         assertEquals(GeminiTaskCategory.SCIENCE_EXPLANATION, sciencePlan.taskCategory)
-        assertEquals("gemini-2.5-pro", sciencePlan.primaryModel)
+        assertEquals("gemini-3.1-pro-preview", sciencePlan.primaryModel)
 
         // Quiz generation
         val quizPlan = GeminiModelRouter.route("Generate a 5-question practice quiz on Organic Chemistry")
         assertEquals(GeminiTaskCategory.QUIZ_GENERATION, quizPlan.taskCategory)
-        assertEquals("gemini-2.5-flash", quizPlan.primaryModel)
+        assertEquals("gemini-3.5-flash", quizPlan.primaryModel)
 
         // Study planning
         val planPlan = GeminiModelRouter.route("Create a 2-hour study routine and revision schedule for today")
         assertEquals(GeminiTaskCategory.STUDY_PLANNING, planPlan.taskCategory)
-        assertEquals("gemini-2.5-flash", planPlan.primaryModel)
+        assertEquals("gemini-3.5-flash", planPlan.primaryModel)
     }
 
     // 15. Request deduplication for rapid re-submits

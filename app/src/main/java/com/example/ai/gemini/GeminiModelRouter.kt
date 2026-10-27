@@ -21,11 +21,11 @@ data class ModelPlan(
 
 object GeminiModelRouter {
 
-    // Valid modern models conforming to gemini-api guidelines
-    private const val MODEL_PRO_REASONING = "gemini-2.5-pro"
-    private const val MODEL_FLASH_BALANCED = "gemini-2.5-flash"
-    private const val MODEL_FLASH_LATEST = "gemini-2.0-flash"
-    private const val MODEL_FLASH_LITE = "gemini-2.0-flash-lite"
+    // Active models conforming to current Gemini REST API endpoints
+    private const val MODEL_PRO_REASONING = "gemini-3.1-pro-preview"
+    private const val MODEL_FLASH_BALANCED = "gemini-3.5-flash"
+    private const val MODEL_FLASH_LATEST = "gemini-3.8-flash"
+    private const val MODEL_FLASH_LITE = "gemini-flash-latest"
 
     /**
      * Determines the optimal model and generation parameters based on prompt content and context.

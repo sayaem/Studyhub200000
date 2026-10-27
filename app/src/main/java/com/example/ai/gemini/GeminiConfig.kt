@@ -16,7 +16,7 @@ data class GeminiConfig(
     val maxOutputTokens: Int = 4096,
     val enableModelFallback: Boolean = true,
     val enableKeyRotation: Boolean = true,
-    val defaultModel: String = "gemini-2.5-flash"
+    val defaultModel: String = "gemini-3.5-flash"
 ) {
     companion object {
         private const val PLACEHOLDER_PREFIX = "your_"
@@ -119,7 +119,7 @@ data class GeminiConfig(
                 maxOutputTokens = maxTokens.coerceIn(512, 8192),
                 enableModelFallback = enableFallback,
                 enableKeyRotation = enableRotation,
-                defaultModel = "gemini-2.5-flash"
+                defaultModel = "gemini-3.5-flash"
             )
         }
 
