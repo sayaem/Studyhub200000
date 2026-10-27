@@ -13,6 +13,5 @@
 /captures
 .externalNativeBuild
 .cxx
-.env
 local.properties
 debug.keystore
