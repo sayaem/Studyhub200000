@@ -71,8 +71,16 @@ class GeminiKeyManager(
             return null
         }
 
-        // Select the least recently used key to distribute load
-        val selected = eligible.minByOrNull { it.lastUsedMs } ?: eligible.first()
+        // Selection strategy:
+        // 1. Prefer healthy keys with 0 consecutive failures
+        // 2. Pick least recently used (LRU) among equally healthy keys to balance load
+        // 3. Break ties by original index order (Key 1 before Key 2)
+        val selected = eligible.minWithOrNull(
+            compareBy<ManagedKey> { it.consecutiveFailures }
+                .thenBy { it.lastUsedMs }
+                .thenBy { it.index }
+        ) ?: eligible.first()
+
         selected.lastUsedMs = now
         return selected
     }

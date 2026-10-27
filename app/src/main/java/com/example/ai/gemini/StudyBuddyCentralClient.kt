@@ -112,8 +112,10 @@ class StudyBuddyCentralClient(
             // Acquire key
             val managedKey = keyManager.acquireKey(attemptedKeys)
             if (managedKey == null) {
+                val allQuarantined = keyManager.areAllKeysQuarantined()
                 val lastError = lastClassifiedError
-                if (lastError != null && (lastError.category == GeminiErrorCategory.AUTH_INVALID ||
+
+                if (allQuarantined && lastError != null && (lastError.category == GeminiErrorCategory.AUTH_INVALID ||
                             lastError.category == GeminiErrorCategory.PERMISSION_OR_BILLING ||
                             lastError.category == GeminiErrorCategory.BAD_REQUEST)) {
                     return BuddyAiResult.Error(
@@ -124,7 +126,6 @@ class StudyBuddyCentralClient(
 
                 val waitMs = keyManager.getEarliestRetryWaitMs() ?: 60_000L
                 val waitSecs = (waitMs / 1000L).coerceAtLeast(1)
-                val allQuarantined = keyManager.areAllKeysQuarantined()
 
                 val errorMessage = if (allQuarantined) {
                     "All configured Gemini API keys failed authentication. Please check your API keys in the Secrets panel."
@@ -265,6 +266,7 @@ class StudyBuddyCentralClient(
                         val nextModel = candidateModels[currentModelIndex + 1]
                         GeminiObservability.recordModelFallback(activeModel, nextModel, "HTTP 404")
                         currentModelIndex++
+                        attemptedKeys.clear()
                         continue
                     } else {
                         break
@@ -298,13 +300,32 @@ class StudyBuddyCentralClient(
             }
         }
 
-        val finalError = lastClassifiedError ?: ClassifiedGeminiError(
-            category = GeminiErrorCategory.SERVER_TRANSIENT,
-            httpStatusCode = null,
-            internalMessage = "Exhausted retries",
-            userFacingMessage = "AI service is temporarily unavailable. Please retry.",
-            canRetry = true
-        )
+        val allQuarantined = keyManager.areAllKeysQuarantined()
+        val finalError = if (allQuarantined) {
+            lastClassifiedError ?: ClassifiedGeminiError(
+                category = GeminiErrorCategory.AUTH_INVALID,
+                httpStatusCode = 401,
+                internalMessage = "All keys quarantined",
+                userFacingMessage = "The AI service authentication failed. Please verify your Gemini API key in the Secrets panel.",
+                canRetry = false
+            )
+        } else if (lastClassifiedError?.category == GeminiErrorCategory.AUTH_INVALID) {
+            ClassifiedGeminiError(
+                category = GeminiErrorCategory.SERVER_TRANSIENT,
+                httpStatusCode = null,
+                internalMessage = "Transient key cooldown",
+                userFacingMessage = "AI service is temporarily busy. Please retry.",
+                canRetry = true
+            )
+        } else {
+            lastClassifiedError ?: ClassifiedGeminiError(
+                category = GeminiErrorCategory.SERVER_TRANSIENT,
+                httpStatusCode = null,
+                internalMessage = "Exhausted retries",
+                userFacingMessage = "AI service is temporarily busy. Please retry.",
+                canRetry = true
+            )
+        }
 
         GeminiObservability.recordMetrics(
             GeminiRequestMetrics(
